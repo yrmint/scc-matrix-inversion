@@ -17,7 +17,7 @@ def read_matrix_from_file(filename):
         data.append(row)
     A = np.array(data)
     if A.shape != (n, n):
-        raise ValueError(f"Wring matrix format in file {filename}: expected {n}x{n}, got {A.shape}")
+        raise ValueError(f"Wrong matrix format in file {filename}: expected {n}x{n}, got {A.shape}")
     return A
 
 def compare_matrices(A_true, A_test, eps=1e-6):
@@ -45,7 +45,7 @@ def check_inverse(original_file, inverse_file, eps=1e-6):
 
     # check if A * A_inv_test ~ I
     I_test = A @ A_inv_test
-    deviation = np.linalg.norm(I_test - np.eye(n), ord='fro')
+    deviation = np.linalg.norm(I_test - np.eye(n)) # for some reason this is drastically different from the norm computed in c code
 
     print(f"Maximum elementwise difference: {max_diff:.3e}")
     print(f"Residual norm ||I - A*A_inv||_F = {deviation:.3e}")
