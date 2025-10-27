@@ -1,0 +1,8 @@
+\babel@toc {russian}{}\relax 
+\contentsline {section}{\numberline {1}Алгоритмы решения задачи и подходы к распараллеливанию кода}{3}{}%
+\contentsline {subsection}{\numberline {1.1}Определение обратной матрицы}{3}{}%
+\contentsline {subsection}{\numberline {1.2}Способы нахождения обратных матриц}{3}{}%
+\contentsline {paragraph}{Метод Жордана--Гаусса.}{3}{}%
+\contentsline {paragraph}{Метод LU--разложения.}{3}{}%
+\contentsline {paragraph}{Метод QR--разложения.}{3}{}%
+\contentsline {paragraph}{Итерационный метод Ньютона-Шульца.}{3}{}%
