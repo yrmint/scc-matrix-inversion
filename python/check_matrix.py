@@ -45,7 +45,7 @@ def check_inverse(original_file, inverse_file, eps=1e-6):
 
     # check if A * A_inv_test ~ I
     I_test = A @ A_inv_test
-    deviation = np.linalg.norm(I_test - np.eye(n)) # for some reason this is drastically different from the norm computed in c code
+    deviation = np.linalg.norm(I_test - np.eye(n))
 
     print(f"Maximum elementwise difference: {max_diff:.3e}")
     print(f"Residual norm ||I - A*A_inv||_F = {deviation:.3e}")

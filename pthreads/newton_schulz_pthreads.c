@@ -287,10 +287,10 @@ int write_matrix_to_file(const char *filename, real *A, int n) {
         perror("Could not open output file\n");
         return -1;
     }
-    fprintf(f, "%.10d\n", n);
+    fprintf(f, "%.18d\n", n);
     for (int i = 0; i < n; ++i) {
         for (int j = 0; j < n; ++j)
-            fprintf(f, "%.10f ", A[i*n + j]);
+            fprintf(f, "%.18f ", A[i*n + j]);
         fprintf(f, "\n");
     }
     fclose(f);
