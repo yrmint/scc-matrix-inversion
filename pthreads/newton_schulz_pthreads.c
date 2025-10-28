@@ -70,12 +70,11 @@ void matmul_parallel(real *A, real *B, real *C, int n, int nthreads) {
     free(args);
 }
 
-// parallel elementwise: C = alpha*X + beta*Y  (if Y==NULL then beta=0)
+// parallel elementwise: C = alpha*X
 typedef struct {
     int row_start, row_end, n;
-    real *X, *Y, *C;
-    real alpha, beta;
-    int op; // 0: C = alpha*X + beta*Y, 1: C = X - Y, 2: C = X + Y, 3: scale X->C (alpha*X)
+    real *X, *C;
+    real alpha;
 } ElemArgs;
 
 void *elem_worker(void *ap) {
@@ -84,77 +83,9 @@ void *elem_worker(void *ap) {
     for (int i = a->row_start; i < a->row_end; ++i) {
         real *Xi = &a->X[i*n];
         real *Ci = &a->C[i*n];
-        if (a->op == 0) {
-            real *Yi = a->Y ? &a->Y[i*n] : NULL;
-            for (int j = 0; j < n; ++j) {
-                Ci[j] = a->alpha * Xi[j] + (Yi ? a->beta * Yi[j] : 0.0);
-            }
-        } else if (a->op == 1) {
-            real *Yi = &a->Y[i*n];
-            for (int j = 0; j < n; ++j) Ci[j] = Xi[j] - Yi[j];
-        } else if (a->op == 2) {
-            real *Yi = &a->Y[i*n];
-            for (int j = 0; j < n; ++j) Ci[j] = Xi[j] + Yi[j];
-        } else if (a->op == 3) {
-            for (int j = 0; j < n; ++j) Ci[j] = a->alpha * Xi[j];
-        }
+        for (int j = 0; j < n; ++j) Ci[j] = a->alpha * Xi[j];
     }
     return NULL;
-}
-
-void elemwise_lincomb(real *X, real *Y, real *C, real alpha, real beta, int n, int nthreads) {
-    pthread_t *threads = malloc(nthreads * sizeof(pthread_t));
-    ElemArgs *args = malloc(nthreads * sizeof(ElemArgs));
-    int base = n / nthreads, rem = n % nthreads, cur = 0;
-    for (int t = 0; t < nthreads; ++t) {
-        int rows = base + (t < rem ? 1 : 0);
-        args[t].row_start = cur;
-        args[t].row_end = cur + rows;
-        args[t].n = n;
-        args[t].X = X; args[t].Y = Y; args[t].C = C;
-        args[t].alpha = alpha; args[t].beta = beta;
-        args[t].op = 0;
-        pthread_create(&threads[t], NULL, elem_worker, &args[t]);
-        cur += rows;
-    }
-    for (int t=0;t<nthreads;++t) pthread_join(threads[t], NULL);
-    free(threads); free(args);
-}
-
-void elemwise_sub(real *X, real *Y, real *C, int n, int nthreads) {
-    pthread_t *threads = malloc(nthreads * sizeof(pthread_t));
-    ElemArgs *args = malloc(nthreads * sizeof(ElemArgs));
-    int base = n / nthreads, rem = n % nthreads, cur = 0;
-    for (int t = 0; t < nthreads; ++t) {
-        int rows = base + (t < rem ? 1 : 0);
-        args[t].row_start = cur;
-        args[t].row_end = cur + rows;
-        args[t].n = n;
-        args[t].X = X; args[t].Y = Y; args[t].C = C;
-        args[t].op = 1;
-        pthread_create(&threads[t], NULL, elem_worker, &args[t]);
-        cur += rows;
-    }
-    for (int t=0;t<nthreads;++t) pthread_join(threads[t], NULL);
-    free(threads); free(args);
-}
-
-void elemwise_add(real *X, real *Y, real *C, int n, int nthreads) {
-    pthread_t *threads = malloc(nthreads * sizeof(pthread_t));
-    ElemArgs *args = malloc(nthreads * sizeof(ElemArgs));
-    int base = n / nthreads, rem = n % nthreads, cur = 0;
-    for (int t = 0; t < nthreads; ++t) {
-        int rows = base + (t < rem ? 1 : 0);
-        args[t].row_start = cur;
-        args[t].row_end = cur + rows;
-        args[t].n = n;
-        args[t].X = X; args[t].Y = Y; args[t].C = C;
-        args[t].op = 2;
-        pthread_create(&threads[t], NULL, elem_worker, &args[t]);
-        cur += rows;
-    }
-    for (int t=0;t<nthreads;++t) pthread_join(threads[t], NULL);
-    free(threads); free(args);
 }
 
 void scale_parallel(real *X, real *C, real alpha, int n, int nthreads) {
@@ -168,7 +99,6 @@ void scale_parallel(real *X, real *C, real alpha, int n, int nthreads) {
         args[t].n = n;
         args[t].X = X; args[t].C = C;
         args[t].alpha = alpha;
-        args[t].op = 3;
         pthread_create(&threads[t], NULL, elem_worker, &args[t]);
         cur += rows;
     }
